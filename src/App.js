@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 
 import MoviesList from './components/MoviesList';
 import './App.css';
@@ -11,26 +11,19 @@ function App() {
   const [isRetrying, setIsRetrying] = useState(false)
   const [retryTimeoutId, setRetryTimeoutId] = useState(null);
 
-  // useEffect(()=>{
-  //   setInterval(()=>{
-  //     setError(false)
-  //     console.log
-  //   })
 
-  // },[error])
-
-  const fetchMoviesHandler = async () => {
+  const fetchMoviesHandler = useCallback(async() => {
     setIsLoading(true);
     setError('');
     setIsRetrying(true)
     console.log('isLoading before fetch:', isLoading);
     try {
       let fetchedMovies = await fetch('https://swapi.dev/api/films');
-      fetchedMovies = await fetchedMovies.json();
+      
       if(!fetchedMovies.ok){
         throw new Error('Something went wrong. Retrying.....')
       }
-      
+      fetchedMovies = await fetchedMovies.json();
       const updatedMovies = fetchedMovies.results.map((movie) => ({
         id: movie.episode_id,
         title: movie.title,
@@ -52,14 +45,18 @@ function App() {
       setRetryTimeoutId(timeoutId)
       console.error('Error fetching movies:', error);
     }
-  };
+  }, [retryTimeoutId])
 
-  const cancelRetryRequest = () =>{
+  const cancelRetryRequest = useCallback(() =>{
     setIsRetrying(false)
     clearTimeout(retryTimeoutId)
     setIsLoading(false)
     setError('Retrying cancelled')
-  }
+  }, [retryTimeoutId])
+
+  useEffect(()=>{
+    fetchMoviesHandler()
+  },[fetchMoviesHandler])
 
   return (
     <React.Fragment>
