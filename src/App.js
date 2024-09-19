@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-
+import MovieForm from './components/MovieForm';
 import MoviesList from './components/MoviesList';
 import './App.css';
 
@@ -60,6 +60,9 @@ function App() {
 
   return (
     <React.Fragment>
+      <section>
+        <MovieForm />
+      </section>
       <section>
         <button onClick={fetchMoviesHandler} disabled={isLoading} >Fetch Movies</button>
         {isRetrying && <button onClick={cancelRetryRequest}>Cancel</button>}
