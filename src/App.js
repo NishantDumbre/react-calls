@@ -4,26 +4,25 @@ import MoviesList from './components/MoviesList';
 import './App.css';
 
 function App() {
-
-  const [movies, setMovies] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [isRetrying, setIsRetrying] = useState(false)
+  const [movies, setMovies] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [isRetrying, setIsRetrying] = useState(false);
   const [retryTimeoutId, setRetryTimeoutId] = useState(null);
+  const [retryCount, setRetryCount] = useState(0)
 
 
-  const fetchMoviesHandler = useCallback(async() => {
-    setIsLoading(true);
-    setError('');
-    setIsRetrying(true)
-    console.log('isLoading before fetch:', isLoading);
+  const fetchMoviesHandler = useCallback(async () => {
+    setError('')
+    setIsLoading(true)
+
     try {
       let fetchedMovies = await fetch('https://swapi.dev/api/films');
-      
-      if(!fetchedMovies.ok){
+      fetchedMovies = await fetchedMovies.json();
+      if (!fetchedMovies.ok) {
         throw new Error('Something went wrong. Retrying.....')
       }
-      fetchedMovies = await fetchedMovies.json();
+
       const updatedMovies = fetchedMovies.results.map((movie) => ({
         id: movie.episode_id,
         title: movie.title,
@@ -31,46 +30,66 @@ function App() {
         releaseDate: movie.release_date,
       }));
 
-      setMovies(updatedMovies);
-      setIsRetrying(false);
-      clearTimeout(); 
-      console.log('isLoading after fetch:', isLoading);
-      setIsLoading(false);
-    } catch (error) {
-      setError('Something went wrong...Retrying');
+      setMovies(updatedMovies)
       setIsLoading(false)
-      const timeoutId = setTimeout(() => {
-        fetchMoviesHandler()
-      },  5000);
-      setRetryTimeoutId(timeoutId)
-      console.error('Error fetching movies:', error);
+      setIsRetrying(false)
+      setRetryCount(0)
+      console.log('is it loading?', isLoading)
+
+    } catch (error) {
+      console.log(error)
+      setIsRetrying(true)
+      setError(error)
+      if (retryCount < 3) {
+        setRetryCount((prevRetryCount) => prevRetryCount + 1);
+        const timeoutId = setTimeout(() => {
+          fetchMoviesHandler();
+        }, 3000);
+        setRetryTimeoutId(timeoutId);
+      } else {
+        setIsRetrying(false);
+        setError('Failed to fetch movies after 3 retries.');
+      }
     }
-  }, [retryTimeoutId])
+  }, []);
 
-  const cancelRetryRequest = useCallback(() =>{
+
+  const cancelRetryRequest = useCallback(() => {
     setIsRetrying(false)
-    clearTimeout(retryTimeoutId)
     setIsLoading(false)
-    setError('Retrying cancelled')
-  }, [retryTimeoutId])
+    console.log(retryTimeoutId)
+    clearTimeout(retryTimeoutId)
+    setError('Retry cancelled')
+  }, [retryTimeoutId]);
 
-  useEffect(()=>{
-    fetchMoviesHandler()
-  },[fetchMoviesHandler])
+
+  useEffect(() => {
+    fetchMoviesHandler();
+  }, [fetchMoviesHandler]);
+
+
+  const addMovieHandler = (movie) => {
+    console.log(movie);
+  };
+
 
   return (
     <React.Fragment>
       <section>
-        <MovieForm />
+        <MovieForm onAddMovie={addMovieHandler} />
       </section>
       <section>
-        <button onClick={fetchMoviesHandler} disabled={isLoading} >Fetch Movies</button>
-        {isRetrying && <button onClick={cancelRetryRequest}>Cancel</button>}
+        <button onClick={fetchMoviesHandler} disabled={isLoading}>
+          Fetch Movies
+        </button>
+        {isRetrying && (
+          <button onClick={cancelRetryRequest}>Cancel Retry</button>
+        )}
       </section>
       <section>
-        {isLoading && <p>Loading movies</p>}
+        {isLoading && <p>Loading movies...</p>}
         {!isLoading && movies.length > 0 && <MoviesList movies={movies} />}
-        {!isLoading && movies.length === 0 && <p>No movies found</p>}
+        {!isLoading && !error && movies.length === 0 && <p>No movies found</p>}
         {error && !isLoading && <p>{error}</p>}
       </section>
     </React.Fragment>
