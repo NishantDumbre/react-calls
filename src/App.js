@@ -35,23 +35,23 @@ function App() {
       setIsRetrying(false)
       setRetryCount(0)
       console.log('is it loading?', isLoading)
-
+      console.log('Loaded successfully')
     } catch (error) {
       console.log(error)
       setIsRetrying(true)
+      console.log(retryCount, 'pre add')
+      setRetryCount(retryCount+1);
+      console.log(retryCount, 'post add')
       setError(error)
-      if (retryCount < 3) {
-        setRetryCount((prevRetryCount) => prevRetryCount + 1);
-        const timeoutId = setTimeout(() => {
-          fetchMoviesHandler();
-        }, 3000);
-        setRetryTimeoutId(timeoutId);
-      } else {
-        setIsRetrying(false);
-        setError('Failed to fetch movies after 3 retries.');
+      if(retryCount > 3){
+        return cancelRetryRequest()
       }
+      const timeoutId = setTimeout(() => {
+        fetchMoviesHandler();
+      }, 3000);
+      setRetryTimeoutId(timeoutId);
     }
-  }, []);
+  }, [retryCount]);
 
 
   const cancelRetryRequest = useCallback(() => {
@@ -65,7 +65,7 @@ function App() {
 
   useEffect(() => {
     fetchMoviesHandler();
-  }, [fetchMoviesHandler]);
+  }, []);
 
 
   const addMovieHandler = (movie) => {
