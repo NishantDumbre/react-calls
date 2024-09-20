@@ -15,22 +15,26 @@ function App() {
   const fetchMoviesHandler = useCallback(async () => {
     setError('');
     setIsLoading(true);
-  
+
     try {
-      let fetchedMovies = await fetch('https://swapi.dev/api/films');
-      fetchedMovies = await fetchedMovies.json();
+      const fetchedMovies = await fetch('https://react-http-b7a30-default-rtdb.asia-southeast1.firebasedatabase.app/films.json');
       if (!fetchedMovies.ok) {
         throw new Error('Something went wrong. Retrying...');
       }
-  
-      const updatedMovies = fetchedMovies.results.map((movie) => ({
-        id: movie.episode_id,
-        title: movie.title,
-        openingText: movie.opening_crawl,
-        releaseDate: movie.release_date,
-      }));
-  
-      setMovies(updatedMovies);
+      const data = await fetchedMovies.json();
+      console.log(fetchedMovies)
+
+      const loadedMovies = []
+      for (let key in data) {
+        loadedMovies.push({
+          id: key,
+          title: data[key].title,
+          openingText: data[key].openingText,
+          releaseDate: data[key].releaseDate,
+        })
+      }
+
+      setMovies(loadedMovies);
       setIsLoading(false);
       setIsRetrying(false);
       setRetryCount(0);
@@ -38,7 +42,7 @@ function App() {
       console.log(error);
       setIsRetrying(true);
       setError(error.message);
-  
+
       setRetryCount((prevRetryCount) => {
         if (prevRetryCount >= 3) {
           cancelRetryRequest();
@@ -52,7 +56,7 @@ function App() {
       });
     }
   }, [retryTimeoutId, retryCount]);
-  
+
 
   const cancelRetryRequest = useCallback(() => {
     setIsRetrying(false)
@@ -68,8 +72,17 @@ function App() {
   }, []);
 
 
-  const addMovieHandler = (movie) => {
-    console.log(movie);
+  const addMovieHandler = async (movie) => {
+    console.log(movie)
+    const addMovie = await fetch('https://react-http-b7a30-default-rtdb.asia-southeast1.firebasedatabase.app/films.json', {
+      method: 'POST',
+      body: JSON.stringify(movie),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    const data = await addMovie.json()
+    console.log(data)
   };
 
 
