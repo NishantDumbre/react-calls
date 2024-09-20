@@ -38,6 +38,7 @@ function App() {
       setIsLoading(false);
       setIsRetrying(false);
       setRetryCount(0);
+      console.log(loadedMovies)
     } catch (error) {
       console.log(error);
       setIsRetrying(true);
@@ -83,7 +84,17 @@ function App() {
     })
     const data = await addMovie.json()
     console.log(data)
+    setMovies((prevMovies) => prevMovies.concat({...movie, id:data}))
   };
+
+
+  const removeMovieHandler = async(movie) =>{
+    console.log(movie)
+    const deleteMovie = await fetch(`https://react-http-b7a30-default-rtdb.asia-southeast1.firebasedatabase.app/films/${movie}.json`, {
+      method: 'DELETE'
+    })
+    setMovies((prevMovies) => prevMovies.filter((data) => data.id !== movie))
+  }
 
 
   return (
@@ -101,7 +112,7 @@ function App() {
       </section>
       <section>
         {isLoading && <p>Loading movies...</p>}
-        {!isLoading && movies.length > 0 && <MoviesList movies={movies} />}
+        {!isLoading && movies.length > 0 && <MoviesList movies={movies} onRemove={removeMovieHandler} />}
         {!isLoading && !error && movies.length === 0 && <p>No movies found</p>}
         {error && !isLoading && <p>{error}</p>}
       </section>

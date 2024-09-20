@@ -18,3 +18,8 @@
   margin: 0;
   font-size: 1rem;
 }
+
+.button{
+  background-color: rgb(255, 255, 255);
+  color: #230052;
+}
