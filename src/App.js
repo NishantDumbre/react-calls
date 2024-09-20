@@ -13,46 +13,46 @@ function App() {
 
 
   const fetchMoviesHandler = useCallback(async () => {
-    setError('')
-    setIsLoading(true)
-
+    setError('');
+    setIsLoading(true);
+  
     try {
       let fetchedMovies = await fetch('https://swapi.dev/api/films');
       fetchedMovies = await fetchedMovies.json();
       if (!fetchedMovies.ok) {
-        throw new Error('Something went wrong. Retrying.....')
+        throw new Error('Something went wrong. Retrying...');
       }
-
+  
       const updatedMovies = fetchedMovies.results.map((movie) => ({
         id: movie.episode_id,
         title: movie.title,
         openingText: movie.opening_crawl,
         releaseDate: movie.release_date,
       }));
-
-      setMovies(updatedMovies)
-      setIsLoading(false)
-      setIsRetrying(false)
-      setRetryCount(0)
-      console.log('is it loading?', isLoading)
-      console.log('Loaded successfully')
+  
+      setMovies(updatedMovies);
+      setIsLoading(false);
+      setIsRetrying(false);
+      setRetryCount(0);
     } catch (error) {
-      console.log(error)
-      setIsRetrying(true)
-      console.log(retryCount, 'pre add')
-      setRetryCount(retryCount+1);
-      console.log(retryCount, 'post add')
-      setError(error)
-      if(retryCount > 3){
-        return cancelRetryRequest()
-      }
-      const timeoutId = setTimeout(() => {
-        fetchMoviesHandler();
-      }, 3000);
-      setRetryTimeoutId(timeoutId);
+      console.log(error);
+      setIsRetrying(true);
+      setError(error.message);
+  
+      setRetryCount((prevRetryCount) => {
+        if (prevRetryCount >= 3) {
+          cancelRetryRequest();
+          return prevRetryCount;
+        }
+        const timeoutId = setTimeout(() => {
+          fetchMoviesHandler();
+        }, 3000);
+        setRetryTimeoutId(timeoutId);
+        return prevRetryCount + 1;
+      });
     }
-  }, [retryCount]);
-
+  }, [retryTimeoutId, retryCount]);
+  
 
   const cancelRetryRequest = useCallback(() => {
     setIsRetrying(false)
